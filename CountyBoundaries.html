@@ -1,0 +1,76 @@
+<html>
+   <title>County boundaries
+   </title>
+   <head>
+      <script type="text/javascript" src="Counties.json" ></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+      <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.4.3/proj4.js"></script>
+      <style>
+         #map{
+         position: absolute;
+         top: 0;
+         bottom: 0;
+         left: 0;
+         right: 0;
+         }
+      </style>
+   </head>
+   <body>
+      <div id="map">
+      </div>
+      <script>
+        $(document).ready(function() {
+
+var oXHR = new XMLHttpRequest();
+
+// Initiate request.
+oXHR.onreadystatechange = reportStatus;
+oXHR.open("GET", "./Counties.json", true); // get json file.
+oXHR.send();
+
+function reportStatus() {
+    if (oXHR.readyState == 4) { // Check if request is complete.
+        var counties = JSON.parse(this.responseText)
+        console.log(counties)
+
+        var map = L.map('map').setView([0, 0], 1);
+        L.tileLayer('https://api.maptiler.com/maps/basic/{z}/{x}/{y}.png?key=qbNszLSvyoEwTnPgTXfc', {
+            attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
+        }).addTo(map);
+
+// below is the helper code to convert UTM to lat long format
+// Used Pro4.js converter to make the conversion
+        var utm = "+proj=utm +zone=18";
+        var wgs84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
+
+        var c1 = null;
+
+        counties.forEach((county) => {
+            if (county.type == "Polygon") {
+
+                var arr = []
+                county.coordinates[0].forEach((coord) => {
+                    c1 = proj4(utm, wgs84, coord);
+                    var tempArr = [];
+                    tempArr.push(c1[1]);
+                    tempArr.push(c1[0]);
+
+                    arr.push(tempArr);
+
+                });
+                //console.table(arr)
+                // finally adding the created array to polygon to populate boundaries
+                L.polygon(
+                    arr).addTo(map)
+
+            }
+
+        });
+    }
+}
+});
+      </script>
+   </body>
+</html>
